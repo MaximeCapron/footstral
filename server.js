@@ -10,7 +10,10 @@ const SPORT = 'soccer_fifa_world_cup';
 
 // ── Auth basique ──────────────────────────────────────────────────────────────
 
+const PUBLIC_PATHS = ['/icon-180.png', '/icon-192.png', '/icon-512.png', '/manifest.json', '/sw.js'];
+
 app.use((req, res, next) => {
+  if (PUBLIC_PATHS.includes(req.path)) return next();
   const auth = req.headers.authorization;
   if (auth?.startsWith('Basic ')) {
     const decoded = Buffer.from(auth.slice(6), 'base64').toString();
