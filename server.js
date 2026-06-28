@@ -14,6 +14,7 @@ const PUBLIC_PATHS = ['/icon-180.png', '/icon-192.png', '/icon-512.png', '/manif
 
 app.use((req, res, next) => {
   if (PUBLIC_PATHS.includes(req.path)) return next();
+  if (!process.env.APP_PASSWORD) return next(); // pas de protection en local
   const auth = req.headers.authorization;
   if (auth?.startsWith('Basic ')) {
     const decoded = Buffer.from(auth.slice(6), 'base64').toString();
@@ -254,8 +255,10 @@ function computeScores(lambdaA, lambdaB, winner) {
     for (let b = 0; b <= MAX; b++) {
       const aWins = a > b;
       const bWins = b > a;
+      const isDraw = a === b;
       if (winner === 'teamA' && !aWins) continue;
       if (winner === 'teamB' && !bWins) continue;
+      if (winner === 'draw' && !isDraw) continue;
 
       const prob = poissonPMF(a, lambdaA) * poissonPMF(b, lambdaB);
       scores.push({
@@ -351,10 +354,7 @@ app.post('/api/analyze', async (req, res) => {
     const bestBet = Object.keys(evMap).reduce((a, b) => (evMap[a] >= evMap[b] ? a : b));
 
     // ── Scores exacts ─────────────────────────────────────────────────────────
-    let allScores = [];
-    if (bestBet !== 'draw') {
-      allScores = computeScores(lambdaA, lambdaB, bestBet);
-    }
+    const allScores = computeScores(lambdaA, lambdaB, bestBet);
 
     const nameA = officialName(aIsHome ? match.home_team : match.away_team);
     const nameB = officialName(aIsHome ? match.away_team : match.home_team);

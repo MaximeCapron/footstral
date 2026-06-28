@@ -282,7 +282,6 @@
 
 <header>
   <h1>Foot<span>stral</span></h1>
-  <p>FIFA World Cup 2026 · Pinnacle</p>
 </header>
 
 <div class="card">
@@ -299,7 +298,7 @@
     </div>
   </div>
 
-  <div class="section-label">Cotes (points)</div>
+  <div class="section-label">Points</div>
   <div class="odds-row">
     <div>
       <label id="lbl-A">Victoire A</label>
@@ -387,6 +386,7 @@
             bestBet, bestScore, allScores, commenceTime } = d;
 
     const winnerName = bestBet === 'teamA' ? nameA : bestBet === 'teamB' ? nameB : 'Nul';
+    const winnerProb = bestBet === 'teamA' ? p.teamA : bestBet === 'teamB' ? p.teamB : p.draw;
 
     const matchDate = commenceTime
       ? new Date(commenceTime).toLocaleString('fr-FR',
@@ -436,6 +436,7 @@
         <div class="best-block">
           <div class="flag-area">
             <div class="team-name">${winnerName}</div>
+            <div class="pts" style="margin-top:.3rem;font-size:.8rem;color:var(--muted)">${fmt(winnerProb)}%</div>
           </div>
           ${scoreBlock}
         </div>
