@@ -225,11 +225,15 @@ function poissonPMF(k, lambda) {
  * Recherche binaire : on cherche λ tel que P(X ≥ ceil(line + 0.5)) = pOver.
  */
 function lambdaFromTotals(totalsMarket) {
-  const over = totalsMarket?.outcomes?.find((o) => o.name === 'Over');
+  const over  = totalsMarket?.outcomes?.find((o) => o.name === 'Over');
+  const under = totalsMarket?.outcomes?.find((o) => o.name === 'Under');
   if (!over) return 2.5; // fallback raisonnable pour le foot international
 
   const line = over.point ?? 2.5;
-  const pOver = 1 / over.price; // proba brute (approximation suffisante ici)
+  // Normalisation : retire la marge bookmaker pour obtenir la vraie proba
+  const impOver  = 1 / over.price;
+  const impUnder = under ? 1 / under.price : impOver;
+  const pOver = impOver / (impOver + impUnder);
   const threshold = Math.ceil(line + 0.5); // 2.5 → 3
 
   let lo = 0.01, hi = 12;
@@ -337,9 +341,11 @@ app.post('/api/analyze', async (req, res) => {
 
     // λ de chaque équipe, proportionnel à leur force offensive relative
     // (approximation : on utilise les probas de victoire comme proxy)
+    // Facteur correctif : le Poisson indépendant surestime les scores à buts multiples
+    const LAMBDA_CORRECTION = 0.88;
     const strengthRatio = probA / (probA + probB);
-    const lambdaA = lambdaTotal * strengthRatio;
-    const lambdaB = lambdaTotal * (1 - strengthRatio);
+    const lambdaA = lambdaTotal * strengthRatio * LAMBDA_CORRECTION;
+    const lambdaB = lambdaTotal * (1 - strengthRatio) * LAMBDA_CORRECTION;
 
     // ── Calcul EV ─────────────────────────────────────────────────────────────
     const oA = parseFloat(oddsA);
