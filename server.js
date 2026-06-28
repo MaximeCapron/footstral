@@ -8,6 +8,19 @@ const API_KEY = process.env.THE_ODDS_API_KEY;
 const ODDS_BASE = 'https://api.the-odds-api.com/v4';
 const SPORT = 'soccer_fifa_world_cup';
 
+// ── Auth basique ──────────────────────────────────────────────────────────────
+
+app.use((req, res, next) => {
+  const auth = req.headers.authorization;
+  if (auth?.startsWith('Basic ')) {
+    const decoded = Buffer.from(auth.slice(6), 'base64').toString();
+    const password = decoded.split(':').slice(1).join(':'); // supporte les ':' dans le mdp
+    if (password === process.env.APP_PASSWORD) return next();
+  }
+  res.setHeader('WWW-Authenticate', 'Basic realm="Footstral", charset="UTF-8"');
+  res.status(401).send('Mot de passe requis');
+});
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
