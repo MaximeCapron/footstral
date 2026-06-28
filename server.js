@@ -14,8 +14,9 @@ app.use((req, res, next) => {
   const auth = req.headers.authorization;
   if (auth?.startsWith('Basic ')) {
     const decoded = Buffer.from(auth.slice(6), 'base64').toString();
-    const password = decoded.split(':').slice(1).join(':'); // supporte les ':' dans le mdp
-    if (password === process.env.APP_PASSWORD) return next();
+    const [username, ...rest] = decoded.split(':');
+    const password = rest.join(':'); // supporte les ':' dans le mdp
+    if (username === process.env.APP_USERNAME && password === process.env.APP_PASSWORD) return next();
   }
   res.setHeader('WWW-Authenticate', 'Basic realm="Footstral", charset="UTF-8"');
   res.status(401).send('Mot de passe requis');
