@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f1117" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Footstral" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>Footstral</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d2e;
+      --border: #252843;
+      --accent: #6366f1;
+      --accent-dim: #4f52d4;
+      --text: #e2e8f0;
+      --muted: #475569;
+      --faint: #252843;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bot: env(safe-area-inset-bottom, 0px);
+    }
+
+    body {
+      font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: calc(var(--safe-top) + 1.5rem) 1rem calc(var(--safe-bot) + 2rem);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 1.75rem;
+    }
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+    header h1 span { color: var(--accent); }
+    header p { color: var(--muted); margin-top: 0.2rem; font-size: 0.78rem; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 480px;
+      margin-bottom: 0.85rem;
+    }
+
+    .section-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 0.85rem;
+    }
+
+    .teams-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0.6rem;
+      align-items: center;
+      margin-bottom: 1.25rem;
+    }
+    .vs {
+      text-align: center;
+      color: var(--faint);
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .odds-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 0.3rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.7rem 0.75rem;
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+      -webkit-appearance: none;
+      transition: border-color 0.15s;
+    }
+    input:focus { border-color: var(--accent); }
+    input::placeholder { color: #1e2535; }
+
+    button {
+      width: 100%;
+      padding: 0.9rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    button:active { background: var(--accent-dim); }
+    button:disabled { opacity: 0.4; }
+
+    /* ── Résultats ── */
+    #results { width: 100%; max-width: 480px; }
+
+    .result-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.4rem;
+      margin-bottom: 0.85rem;
+    }
+
+    /* Grille probas */
+    .prob-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .prob-cell {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.9rem 0.4rem;
+      text-align: center;
+    }
+    .prob-cell .lbl {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .prob-cell .pct {
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+    .prob-cell .pts {
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+    .prob-cell.winner {
+      border-color: var(--accent);
+      background: #141629;
+    }
+    .prob-cell.winner .pct { color: #818cf8; }
+
+    /* Pari recommandé */
+    .best-block {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--bg);
+      border: 1px solid var(--accent-dim);
+      border-radius: 14px;
+      padding: 1.1rem 1.25rem;
+    }
+    .best-block .flag-area {
+      flex: 1;
+    }
+    .best-block .team-name {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.2;
+    }
+    .best-block .score-badge {
+      background: var(--accent);
+      border-radius: 10px;
+      padding: 0.5rem 0.9rem;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .best-block .score-badge .score-val {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 1px;
+    }
+    .best-block .score-badge .score-lbl {
+      font-size: 0.58rem;
+      color: rgba(255,255,255,0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 0.1rem;
+    }
+
+    /* Liste scores */
+    .score-list {
+      margin-top: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .score-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.6rem 1rem;
+    }
+    .score-item.top { border-color: var(--accent); }
+    .score-item .s { font-weight: 700; }
+    .score-item .p { font-size: 0.8rem; color: var(--muted); }
+
+    .meta {
+      font-size: 0.65rem;
+      color: #2a3050;
+      margin-top: 0.65rem;
+      line-height: 1.7;
+    }
+
+    .error-box {
+      background: #1a0f0f;
+      border: 1px solid #7f1d1d;
+      border-radius: 16px;
+      padding: 1.25rem;
+      color: #fca5a5;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+    .error-box .available {
+      margin-top: 0.75rem;
+      color: #475569;
+      font-size: 0.72rem;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 15px; height: 15px;
+      border: 2px solid rgba(255,255,255,.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.4rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Foot<span>stral</span></h1>
+  <p>FIFA World Cup 2026 · Pinnacle</p>
+</header>
+
+<div class="card">
+  <div class="section-label">Match</div>
+  <div class="teams-row">
+    <div>
+      <label>Equipe A</label>
+      <input id="teamA" type="text" placeholder="ex : France" autocomplete="off" autocorrect="off" />
+    </div>
+    <div class="vs">VS</div>
+    <div>
+      <label>Equipe B</label>
+      <input id="teamB" type="text" placeholder="ex : Brésil" autocomplete="off" autocorrect="off" />
+    </div>
+  </div>
+
+  <div class="section-label">Cotes (points)</div>
+  <div class="odds-row">
+    <div>
+      <label id="lbl-A">Victoire A</label>
+      <input id="oddsA" type="number" inputmode="decimal" min="0" step="0.5" placeholder="38" />
+    </div>
+    <div>
+      <label>Nul</label>
+      <input id="oddsDraw" type="number" inputmode="decimal" min="0" step="0.5" placeholder="32" />
+    </div>
+    <div>
+      <label id="lbl-B">Victoire B</label>
+      <input id="oddsB" type="number" inputmode="decimal" min="0" step="0.5" placeholder="25" />
+    </div>
+  </div>
+
+  <button id="btn" onclick="analyze()">Analyser</button>
+</div>
+
+<div id="results"></div>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+  }
+
+  ['teamA', 'teamB'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      const val = document.getElementById(id).value.trim();
+      const short = val.length > 12 ? val.slice(0, 12) + '…' : val;
+      document.getElementById(id === 'teamA' ? 'lbl-A' : 'lbl-B').textContent =
+        short ? `Victoire ${short}` : (id === 'teamA' ? 'Victoire A' : 'Victoire B');
+    });
+  });
+
+  async function analyze() {
+    const teamA    = document.getElementById('teamA').value.trim();
+    const teamB    = document.getElementById('teamB').value.trim();
+    const oddsA    = document.getElementById('oddsA').value;
+    const oddsDraw = document.getElementById('oddsDraw').value;
+    const oddsB    = document.getElementById('oddsB').value;
+
+    if (!teamA || !teamB || !oddsA || !oddsB) {
+      showError('Remplis les deux équipes et les cotes A et B.'); return;
+    }
+
+    const btn = document.getElementById('btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Recherche…';
+
+    try {
+      const res  = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          teamA, teamB,
+          oddsA: +oddsA,
+          oddsDraw: oddsDraw ? +oddsDraw : null,
+          oddsB: +oddsB,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) showError(data.error, data.available);
+      else showResults(data);
+    } catch (e) {
+      showError('Erreur réseau : ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Analyser';
+    }
+  }
+
+  function showError(msg, available) {
+    document.getElementById('results').innerHTML = `
+      <div class="error-box">
+        <strong>${msg}</strong>
+        ${available ? `<div class="available">Matchs disponibles :<br>${available.join('<br>')}</div>` : ''}
+      </div>`;
+  }
+
+  function fmt(n) { return Number(n).toFixed(1); }
+
+  function showResults(d) {
+    const el = document.getElementById('results');
+    const { nameA, nameB, probabilities: p, expectedValues: ev,
+            bestBet, bestScore, allScores, commenceTime } = d;
+
+    const winnerName = bestBet === 'teamA' ? nameA : bestBet === 'teamB' ? nameB : 'Nul';
+
+    const matchDate = commenceTime
+      ? new Date(commenceTime).toLocaleString('fr-FR',
+          { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+      : '';
+
+    const rows = [
+      { key: 'teamA', label: nameA, prob: p.teamA, ev: ev.teamA },
+      { key: 'draw',  label: 'Nul',  prob: p.draw,  ev: ev.draw  },
+      { key: 'teamB', label: nameB, prob: p.teamB, ev: ev.teamB },
+    ];
+
+    const probHTML = rows.map(r => `
+      <div class="prob-cell ${r.key === bestBet ? 'winner' : ''}">
+        <div class="lbl">${r.label}</div>
+        <div class="pct">${fmt(r.prob)}%</div>
+        <div class="pts">EV ${Number(r.ev).toFixed(1)}</div>
+      </div>`).join('');
+
+    const scoreBlock = bestScore
+      ? `<div class="score-badge">
+           <div class="score-val">${bestScore.score}</div>
+           <div class="score-lbl">score</div>
+         </div>`
+      : '';
+
+    const otherScores = allScores.slice(1, 6);
+    const scoresHTML = otherScores.length
+      ? `<div class="score-list">
+          ${otherScores.map(s => `
+            <div class="score-item">
+              <span class="s">${s.score}</span>
+              <span class="p">${fmt(s.probability)}%</span>
+            </div>`).join('')}
+        </div>`
+      : '';
+
+    el.innerHTML = `
+      <div class="result-card">
+        <div class="section-label">Probabilités</div>
+        <div class="prob-grid">${probHTML}</div>
+        <p class="meta">${nameA} vs ${nameB} · ${matchDate}</p>
+      </div>
+
+      <div class="result-card">
+        <div class="section-label">Pari recommandé</div>
+        <div class="best-block">
+          <div class="flag-area">
+            <div class="team-name">${winnerName}</div>
+          </div>
+          ${scoreBlock}
+        </div>
+        ${otherScores.length ? `
+          <p class="meta" style="margin-top:.75rem;margin-bottom:.4rem">Autres scores</p>
+          ${scoresHTML}` : ''}
+      </div>
+    `;
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') analyze(); });
+</script>
+</body>
+</html>
